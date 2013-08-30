@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.util.Log;
+//commentaire hervé
 
 public class HTTPPost {
 	HttpClient httpclient;

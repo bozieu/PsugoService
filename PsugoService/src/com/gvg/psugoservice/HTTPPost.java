@@ -1,9 +1,8 @@
+// Commentaire Hervé
+
 package com.gvg.psugoservice;
 
 import java.util.List;
-
-// Commentaire 
-
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
@@ -12,7 +11,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.util.Log;
-//commentaire hervé
 
 public class HTTPPost {
 	HttpClient httpclient;

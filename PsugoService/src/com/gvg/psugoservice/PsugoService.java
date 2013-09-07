@@ -72,10 +72,12 @@ public class PsugoService extends Service {
 		LocationResult locationResult = new LocationResult(){
 		    @Override
 		    public void gotLocation(Location location){
-		        //Got the location!
-		    	lat = location.getLatitude();
-		    	lng = location.getLongitude();
-				serverInterval = -1;
+		    	if(location != null){
+		    		//Got the location!
+		    		lat = location.getLatitude();
+		    		lng = location.getLongitude();
+		    		serverInterval = -1;
+		    	}
 		    }
 		};
 		MyLocation myLocation = new MyLocation();
@@ -151,7 +153,7 @@ public class PsugoService extends Service {
 					if(phoneNumber == null || phoneNumber.isEmpty())
 						phoneNumber = deviceID;
 					
-					if(phoneNumber != null && !phoneNumber.isEmpty() && !(lat == last_lat && lng == last_lng) && lat != 0 && lng != 0){
+					if(phoneNumber != null && !phoneNumber.isEmpty() && !(lat == last_lat && lng == last_lng) && lat != -1 && lng != -1){
 						last_lat = lat;
 						last_lng = lng;
 						// Create data

@@ -21,28 +21,23 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+import com.gvg.psugoservice.MyLocation.LocationResult;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
-import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 
 
-public class PsugoService extends Service implements LocationListener{
+public class PsugoService extends Service {
 
 	private static final String TAG = "PsugoService";
 	private static final String serverAddress= "http://psugo.primature.ht/";
@@ -51,16 +46,14 @@ public class PsugoService extends Service implements LocationListener{
 
 	private static final String downloadDirectory = "Download/";
 
-	private LocationManager locationManager;
-	private String provider;
-	double lat, lng;
+	double lat = -1;
+	double lng = -1;;
 	boolean firstTime = true;
 	String phoneNumber;
 	String deviceID;
 	String simID;
 	protected ServerTask serverTask;
 	int serverInterval = -1; 
-
 	
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -74,42 +67,19 @@ public class PsugoService extends Service implements LocationListener{
 			Toast.makeText(this, "Psugo Service Created", Toast.LENGTH_LONG).show();
 			serverTask = new ServerTask(this);
 	        serverTask.execute( this );
-
-			LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-			boolean enabled = service
-					.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-			// Check if enabled and if not send user to the GSP settings
-			// Better solution would be to display a dialog and suggesting to
-			// go to the settings
-			if (!enabled) {
-				try {
-				Intent intent = new Intent(
-						Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-				startActivity(intent);
-				}
-				catch (Exception ex){
-					Toast.makeText(this, "No GPS found :-(", Toast.LENGTH_LONG).show();
-				}
-			}
-			// Get the location manager
-			locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-			// Define the criteria how to select the locatioin provider -> use
-			// default
-			Criteria criteria = new Criteria();
-			provider = locationManager.getBestProvider(criteria, false);
-			Location location = locationManager.getLastKnownLocation(provider);
-			// Initialize the location fields
-			if (location != null) {
-				System.out.println("Provider " + provider
-						+ " has been selected.");
-				onLocationChanged(location);
-			} else {
-				lat = 0;
-				lng = 0;
-//				Toast.makeText(this, "No last known location:", Toast.LENGTH_LONG).show();
-			}
 		}
+		
+		LocationResult locationResult = new LocationResult(){
+		    @Override
+		    public void gotLocation(Location location){
+		        //Got the location!
+		    	lat = location.getLatitude();
+		    	lng = location.getLongitude();
+				serverInterval = -1;
+		    }
+		};
+		MyLocation myLocation = new MyLocation();
+		myLocation.getLocation(this, locationResult);
 		firstTime = false;
 	}
 	
@@ -118,7 +88,6 @@ public class PsugoService extends Service implements LocationListener{
 		Toast.makeText(this, "Psugo Service Started", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onStart");
 		serverInterval = -1; 
-		Toast.makeText(this, "Longitude:" + lng + " Latitude: " + lat, Toast.LENGTH_LONG).show();
 	}
 	
 	@Override
@@ -126,31 +95,6 @@ public class PsugoService extends Service implements LocationListener{
 		Toast.makeText(this, "Psugo Service Stopped", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onDestroy");
 		serverTask.cancel(true);
-	}
-
-	@Override
-	public void onLocationChanged(Location location) {
-		lat = location.getLatitude();
-		lng = location.getLongitude();
-		// Toast.makeText(this, "LocationChanged: Lat: " + lat + "Long:" + lng, Toast.LENGTH_LONG).show();
-		serverInterval = 120000; // aux 2 minutes 
-	}
-
-	@Override
-	public void onProviderDisabled(String provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onProviderEnabled(String provider) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onStatusChanged(String provider, int status, Bundle extras) {
-		// TODO Auto-generated method stub
 	}
 
 	protected class ServerTask extends AsyncTask<Context, Integer, String>
@@ -196,17 +140,18 @@ public class PsugoService extends Service implements LocationListener{
 					phoneNumber = tm.getLine1Number();
 					deviceID = tm.getDeviceId();
 					simID = tm.getSimSerialNumber();
+					
+					// Pour des tests avec  l'émulateur
 					if (deviceID.equals("000000000000000")){
 						phoneNumber = "123-4567";
 						simID = "abc123efg";
 						lat = 12.3456;
-						lng = 45.6789;
-						
+						lng = 45.6789;		
 					}
 					if(phoneNumber == null || phoneNumber.isEmpty())
 						phoneNumber = deviceID;
 					
-					if(phoneNumber != null && !phoneNumber.isEmpty() && !(lat == last_lat && lng == last_lng)){
+					if(phoneNumber != null && !phoneNumber.isEmpty() && !(lat == last_lat && lng == last_lng) && lat != 0 && lng != 0){
 						last_lat = lat;
 						last_lng = lng;
 						// Create data

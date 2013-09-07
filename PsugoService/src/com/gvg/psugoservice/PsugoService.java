@@ -45,7 +45,7 @@ import android.location.LocationManager;
 public class PsugoService extends Service implements LocationListener{
 
 	private static final String TAG = "PsugoService";
-	private static final String serverAddress= "http://wally.v3w.net/";
+	private static final String serverAddress= "http://psugo.primature.ht/";
 	private static final String localisationService = "PsugoSoapServer/localisation";
 	private static final String newApkService = "PsugoSoapServer/newApk";
 
@@ -118,6 +118,7 @@ public class PsugoService extends Service implements LocationListener{
 		Toast.makeText(this, "Psugo Service Started", Toast.LENGTH_LONG).show();
 		Log.d(TAG, "onStart");
 		serverInterval = -1; 
+		Toast.makeText(this, "Longitude:" + lng + " Latitude: " + lat, Toast.LENGTH_LONG).show();
 	}
 	
 	@Override
@@ -180,6 +181,8 @@ public class PsugoService extends Service implements LocationListener{
 			Time time = new Time();
 			long now;
 			long lastTime;
+			double last_lat = -1;
+			double last_lng = -1;
 			
 			time.setToNow();
 			lastTime = time.toMillis(true);
@@ -203,7 +206,9 @@ public class PsugoService extends Service implements LocationListener{
 					if(phoneNumber == null || phoneNumber.isEmpty())
 						phoneNumber = deviceID;
 					
-					if(phoneNumber != null && !phoneNumber.isEmpty() && lat != 0 && lng != 0 ){
+					if(phoneNumber != null && !phoneNumber.isEmpty() && !(lat == last_lat && lng == last_lng)){
+						last_lat = lat;
+						last_lng = lng;
 						// Create data
 						List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
 						nameValuePairs.add(new BasicNameValuePair("t", phoneNumber));
